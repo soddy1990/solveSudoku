@@ -61,7 +61,7 @@ bool columncheck(vector<vector<char>>& board, int i) {
 	return true;
 }
 
-bool solver(vector<vector<char>>& board, int i, int j, int n){
+bool solver(vector<vector<char>>& board, int i, int j, int n, vector<vector<vector<int>>> &available){
 	if(j == n){
 		j = 0;
 		i++;
@@ -71,17 +71,17 @@ bool solver(vector<vector<char>>& board, int i, int j, int n){
 	} 
 	if(board[i][j] != '.'){
 		if(j<n)
-			return solver(board, i, j+1, n);
+			return solver(board, i, j+1, n, available);
 		else
-			return solver(board, i+1, 0, n);
+			return solver(board, i+1, 0, n, available);
 	}else{
-		for(int k = 1; k<=9; k++){
-			board[i][j] = k+48;
+		for(int k = 0; k<available[i][j].size(); k++){
+			board[i][j] = available[i][j][k]+48;
 			//cout<<endl;
 			//show(board);
 			if(groupcheck(board,i,j) && rowcheck(board, j) && columncheck(board, i)){
 				if(j<n){
-					if(solver(board, i, j+1, n)){
+					if(solver(board, i, j+1, n, available)){
 						return true;
 					}
 					else{
@@ -90,7 +90,7 @@ bool solver(vector<vector<char>>& board, int i, int j, int n){
 					}
 				}
 				else{
-					if(solver(board, i+1, j, n)){
+					if(solver(board, i+1, j, n, available)){
 						return true;
 					}
 					else{
@@ -111,8 +111,47 @@ void solveSudoku(vector<vector<char>>& board) {
 		int cols = board[0].size();
 		int n = 0;
 		if(cols == rows){
+
+			vector<vector<vector<int>>> available; 
+			for(int i = 0; i<board.size(); i++){
+				vector<vector<int>> available_1;
+				for(int j = 0; j<board[i].size(); j++){
+					vector<int> available_2;
+					bool available[9];
+					for(int a_tab = 0; a_tab<9; a_tab++){
+						available[a_tab] = true;
+					}
+					for(int a_tab = 0; a_tab< board.size(); a_tab++){
+						if(board[a_tab][j] != '.'){
+							available[board[a_tab][j] - 48 - 1] = false;
+						}
+					}
+					for(int a_tab = 0; a_tab< board[i].size(); a_tab++){
+						if(board[i][a_tab] != '.'){
+							available[board[i][a_tab] - 48 - 1] = false;
+						}
+					}
+					int group_i = i/3;
+					int group_j = j/3;
+					for(int k = 0; k<3; k++){
+						for(int l = 0; l<3; l++){
+							if(board[group_i*3 + k][group_j*3 + l] != '.'){
+								available[board[group_i*3 + k][group_j*3 + l] - 48 - 1] = false;
+							}
+						}
+					}
+					for(int a_tab = 0; a_tab < 9; a_tab++){
+						if(available[a_tab]){
+							available_2.push_back(a_tab+1);
+						}
+					}
+					available_1.push_back(available_2);
+				}
+				available.push_back(available_1);
+			}
+
 			n = rows;
-			solver(board, 0, 0, n);
+			solver(board, 0, 0, n, available);
 		}
 	}
 }
@@ -228,7 +267,7 @@ void main(){
 	line.push_back('9');
 	board.push_back(line);
 	line.clear();
-		
+
 	show(board);
 	cout<<endl;
 	solveSudoku(board);
